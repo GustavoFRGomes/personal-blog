@@ -39,7 +39,18 @@ A simple Kotlin Multiplatform static blog generator.
 
 ### Cloudflare Pages
 
+#### Manual Deployment
 - In Cloudflare Pages settings, set build command to `./gradlew buildSite` and publish directory to `build/site`.
+
+#### Automated Deployment via GitHub Actions
+The repository is configured to automatically deploy to Cloudflare Pages when changes are pushed to the `main` branch. To set this up:
+
+1. Create a Cloudflare Pages project for your site.
+2. Add the following secrets to your GitHub repository:
+   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token with Pages permissions
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+
+The CI workflow will build the site and deploy it to Cloudflare Pages automatically.
 
 ## Customization
 

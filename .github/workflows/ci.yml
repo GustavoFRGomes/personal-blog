@@ -20,8 +20,11 @@ jobs:
       - name: Build site
         run: ./gradlew buildSite
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/site
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ggomes-org
+          directory: ./build/site
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
