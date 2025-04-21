@@ -27,4 +27,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: kmp-blog
           directory: ./build/site
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

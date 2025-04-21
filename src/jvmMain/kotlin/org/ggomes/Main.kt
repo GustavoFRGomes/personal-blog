@@ -11,6 +11,7 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 private const val URL = "https://ggomes.org"
+private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 fun main() {
     val contentDir = File("content/posts")
@@ -27,7 +28,11 @@ fun main() {
         val html = renderer.render(doc)
         val title = file.nameWithoutExtension.replace('-', ' ').capitalizeWords()
         val date = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        Post(title, date, html, file.nameWithoutExtension + ".html")
+
+        // Extract preview - either first paragraph or first 3000 characters
+        val preview = extractPreview(html)
+
+        Post(title, date, html, file.nameWithoutExtension + ".html", preview)
     }?.sortedByDescending { it.date } ?: emptyList()
 
     outputDir.mkdirs()
@@ -46,7 +51,7 @@ fun main() {
     }
 }
 
-data class Post(val title: String, val date: String, val content: String, val slug: String)
+data class Post(val title: String, val date: String, val content: String, val slug: String, val preview: String)
 
 fun generateSocialLinks(): FlowContent.() -> Unit = {
     div(classes = "social-links") {
@@ -69,11 +74,17 @@ fun generateIndex(posts: List<Post>): String = createHTML().html {
     }
     body {
         h1 { +"My Blog" }
-        ul {
+        div(classes = "post-list") {
             posts.forEach { post ->
-                li {
-                    a(href = post.slug) { +post.title }
-                    span { +" - ${post.date}" }
+                div(classes = "post-item") {
+                    h2 {
+                        a(href = post.slug) { +post.title }
+                    }
+                    p(classes = "post-date") { +ZonedDateTime.parse(post.date).format(DATE_FORMATTER) }
+                    div(classes = "post-preview") {
+                        unsafe { +post.preview }
+                    }
+                    a(href = post.slug, classes = "read-more") { +"Read more..." }
                 }
             }
         }
@@ -91,7 +102,7 @@ fun generatePost(post: Post): String = createHTML().html {
     body {
         a(href = "index.html") { +"← Back to home" }
         h1 { +post.title }
-        p { +post.date }
+        p { +ZonedDateTime.parse(post.date).format(DATE_FORMATTER) }
         unsafe { +post.content }
         hr {}
         generateSocialLinks()()
@@ -115,3 +126,22 @@ ${posts.joinToString("\n") { post ->
 }
 
 fun String.capitalizeWords(): String = split(' ').joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+
+/**
+ * Extracts a preview from HTML content.
+ * Returns either the first paragraph or the first 3000 characters.
+ */
+fun extractPreview(html: String): String {
+    // Try to find the first paragraph
+    val paragraphRegex = "<p>(.*?)</p>".toRegex(RegexOption.DOT_MATCHES_ALL)
+    val firstParagraphMatch = paragraphRegex.find(html)
+
+    return if (firstParagraphMatch != null) {
+        // Return the content of the first paragraph
+        firstParagraphMatch.groupValues[1]
+    } else {
+        // If no paragraph found, return first 3000 characters (stripped of HTML tags)
+        val noHtmlTags = html.replace("<[^>]*>".toRegex(), "")
+        if (noHtmlTags.length <= 3000) noHtmlTags else noHtmlTags.take(3000) + "..."
+    }
+}
