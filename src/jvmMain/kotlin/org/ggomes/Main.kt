@@ -12,30 +12,82 @@ import kotlinx.html.stream.createHTML
 
 private const val URL = "https://ggomes.org"
 private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+private val ISO_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
 fun main() {
     val contentDir = File("content/posts")
     val outputDir = File("build/site")
     val posts = contentDir.listFiles { _, name -> name.endsWith(".md") }?.map { file ->
-        val markdown = file.readText()
+        var markdown = file.readText()
+
+        // Check for date metadata
+        val dateMetadataRegex = """^date:\s*(.+)$""".toRegex(RegexOption.MULTILINE)
+        val dateMatch = dateMetadataRegex.find(markdown)
+
+        // Check for draft metadata
+        val draftMetadataRegex = """^draft:\s*(true|false)$""".toRegex(RegexOption.MULTILINE)
+        val draftMatch = draftMetadataRegex.find(markdown)
+        val isDraft = draftMatch?.groupValues?.get(1)?.trim() == "true"
+
+
+        val date = if (dateMatch != null) {
+            // Use existing date from metadata
+            dateMatch.groupValues[1].trim()
+        } else {
+            // Add date metadata to the file in YAML frontmatter format
+            val currentDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val dateMetadata = "---\ndate: $currentDate\n---\n"
+
+            // Clean up the markdown content first
+            val cleanMarkdown = markdown.trimStart()
+
+            // Add YAML frontmatter at the beginning of the file
+            markdown = dateMetadata + cleanMarkdown
+
+            // Update the file with the new metadata
+            file.writeText(markdown)
+
+            // Return the current date in ISO format for the Post object
+            ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        }
+
+        // Remove YAML frontmatter and standalone date lines before parsing to avoid them showing in the rendered HTML
+        var markdownWithoutMetadata = markdown
+
+        // Remove YAML frontmatter if present
+        markdownWithoutMetadata = markdownWithoutMetadata.replace("""^---\s*\n(.*?\n)---\s*\n""".toRegex(RegexOption.DOT_MATCHES_ALL), "")
+
+        // Also remove standalone date lines (for backward compatibility)
+        markdownWithoutMetadata = markdownWithoutMetadata.replace("""^date:\s*.+$""".toRegex(RegexOption.MULTILINE), "")
+
         val parser = Parser.builder()
             .extensions(listOf(TablesExtension.create(), StrikethroughExtension.create()))
             .build()
-        val doc = parser.parse(markdown)
+        val doc = parser.parse(markdownWithoutMetadata)
         val renderer = HtmlRenderer.builder()
             .extensions(listOf(TablesExtension.create(), StrikethroughExtension.create()))
             .build()
         val html = renderer.render(doc)
         val title = file.nameWithoutExtension.replace('-', ' ').capitalizeWords()
-        val date = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
         // Extract preview - either first paragraph or first 3000 characters
         val preview = extractPreview(html)
 
-        Post(title, date, html, file.nameWithoutExtension + ".html", preview)
-    }?.sortedByDescending { it.date } ?: emptyList()
+        Post(title, date, html, file.nameWithoutExtension + ".html", preview, isDraft)
+    }?.filter { !it.isDraft }?.sortedByDescending { it.date } ?: emptyList()
 
-    outputDir.mkdirs()
+    // Clean up the output directory and create it if it doesn't exist
+    if (outputDir.exists()) {
+        outputDir.listFiles()?.forEach { file ->
+            if (file.isFile && file.extension == "html") {
+                file.delete()
+            }
+        }
+    } else {
+        outputDir.mkdirs()
+    }
+
+    // Generate site files
     File(outputDir, "index.html").writeText(generateIndex(posts))
     posts.forEach { post ->
         File(outputDir, post.slug).writeText(generatePost(post))
@@ -51,7 +103,19 @@ fun main() {
     }
 }
 
-data class Post(val title: String, val date: String, val content: String, val slug: String, val preview: String)
+data class Post(val title: String, val date: String, val content: String, val slug: String, val preview: String, val isDraft: Boolean = false) {
+    fun formattedDate(): String {
+        return try {
+            // Try to parse the date using ISO_DATE_FORMATTER
+            val localDate = java.time.LocalDate.parse(date, ISO_DATE_FORMATTER)
+            // Convert to ZonedDateTime and format with DATE_FORMATTER
+            localDate.atStartOfDay(java.time.ZoneId.of("UTC")).format(DATE_FORMATTER)
+        } catch (e: Exception) {
+            // If parsing fails, return the original date string
+            date
+        }
+    }
+}
 
 fun generateSocialLinks(): FlowContent.() -> Unit = {
     div(classes = "social-links") {
@@ -80,7 +144,7 @@ fun generateIndex(posts: List<Post>): String = createHTML().html {
                     h2 {
                         a(href = post.slug) { +post.title }
                     }
-                    p(classes = "post-date") { +ZonedDateTime.parse(post.date).format(DATE_FORMATTER) }
+                    p(classes = "post-date") { +post.formattedDate() }
                     div(classes = "post-preview") {
                         unsafe { +post.preview }
                     }
@@ -102,7 +166,7 @@ fun generatePost(post: Post): String = createHTML().html {
     body {
         a(href = "index.html") { +"← Back to home" }
         h1 { +post.title }
-        p { +ZonedDateTime.parse(post.date).format(DATE_FORMATTER) }
+        p { +post.formattedDate() }
         unsafe { +post.content }
         hr {}
         generateSocialLinks()()
@@ -119,7 +183,7 @@ fun generateRSS(posts: List<Post>): String {
   <description>My personal blog</description>
   <lastBuildDate>$now</lastBuildDate>
 ${posts.joinToString("\n") { post ->
-    "  <item>\n    <title>${post.title}</title>\n    <link>$URL/${post.slug}</link>\n    <pubDate>${ZonedDateTime.parse(post.date).format(DateTimeFormatter.RFC_1123_DATE_TIME)}</pubDate>\n    <description><![CDATA[${post.content}]]></description>\n  </item>"
+    "  <item>\n    <title>${post.title}</title>\n    <link>$URL/${post.slug}</link>\n    <pubDate>${ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)}</pubDate>\n    <description><![CDATA[${post.content}]]></description>\n  </item>"
 }}
 </channel>
 </rss>"""
