@@ -93,6 +93,8 @@ fun main() {
         File(outputDir, post.slug).writeText(generatePost(post))
     }
     File(outputDir, "rss.xml").writeText(generateRSS(posts))
+    // Puzzle page:
+    File(outputDir, "puzzle.html").writeText(kotlinPuzzle)
 
     // copy static assets from `static` directory to output
     val staticDir = File("static")
@@ -209,3 +211,79 @@ fun extractPreview(html: String): String {
         if (noHtmlTags.length <= 3000) noHtmlTags else noHtmlTags.take(3000) + "..."
     }
 }
+
+private val kotlinPuzzle = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kotlin Brain-Teaser: Enum Class</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            padding: 8px 16px;
+            background: #0073aa;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #005f8a;
+        }
+        #explanation {
+            display: none;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #0073aa;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kotlin Brain-Teaser</h1>
+    <p>What does this code output? Or does it error?</p>
+    <pre><code>
+enum class
+private enum class Visibility { Visible, Hidden }
+fun main() {
+    println("Nothing to see here…")
+}
+    </code></pre>
+    <button onclick="reveal()">Reveal Explanation</button>
+    <div id="explanation">
+        <p>
+            This puzzle’s first line of code is an unfinished enum class declaration that’s missing its name and body.
+            So why doesn’t the compiler reject it?
+            A class declaration doesn’t end at the first line break—it can span multiple lines, continuing until the compiler determines that it’s syntactically complete.
+            The formatting makes it look like <code>private</code> is the start of a new declaration, but in fact, it’s the end of the first one, and acts as our missing class name.
+            A class doesn’t require a body, and doesn’t need to end with a final line break.
+            That means <code>enum class private</code> is a complete (if oddly named) enum declaration, and the code compiles and runs, printing:
+        </p>
+        <pre><code>Nothing to see here…</code></pre>
+    </div>
+
+    <script>
+        function reveal() {
+            document.getElementById('explanation').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+"""
+
