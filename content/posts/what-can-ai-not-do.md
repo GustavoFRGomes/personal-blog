@@ -1,5 +1,6 @@
 ---
 date: 2025-04-27
+draft: true
 ---
 # What can AI not do?
 In this blog post I will try to define what AI can do, which helps us as developers and professionals, and perhaps what
