@@ -126,7 +126,7 @@ fun main() {
     File(presentationsDir, "droidcon-2026-berlin-vector-search.html").writeText(generatePresentationPage(
         title = "DroidCon Berlin 2026 - Vector Search",
         description = "Presentation on Vector Search techniques for mobile applications",
-        pdfUrl = "presentations/droidcon-2026-berlin-vector-search.pdf",
+        pdfUrl = "droidcon-2026-berlin-vector-search.pdf",
         downloadUrl = "https://c.mail.com/@1237970809700491004/GyAkJIWvgDG4f-iCN7UoTQ",
         date = "2026-04-15"
     ))
@@ -191,49 +191,61 @@ fun generateModelReviewsIndex(reviews: List<Post>): String = createHTML().html {
             }
         }
         hr {}
-        generateSocialLinks()()
+        generateSocialLinks(depth = 1)()
         script(src = "../theme.js") {}
     }
 }
 
-fun generateSocialLinks(): FlowContent.() -> Unit = {
+fun generateNav(depth: Int = 0): FlowContent.() -> Unit = {
+    val prefix = if (depth > 0) { "../".repeat(depth) } else { "" }
+    nav {
+        a(href = "${prefix}index.html") { +"My Blog" }
+        +" | "
+        a(href = "${prefix}model-reviews/index.html") { +"AI Model Reviews" }
+        +" | "
+        a(href = "${prefix}presentations/index.html") { +"Presentations" }
+    }
+}
+
+fun generateSocialLinks(depth: Int = 0): FlowContent.() -> Unit = {
+    val prefix = if (depth > 0) { "../".repeat(depth) } else { "" }
     div(classes = "social-links") {
         h3 { +"Connect with me" }
         ul {
-            li { 
-                a(href = "https://github.com/GustavoFRGomes", classes = "icon github") { 
+            li {
+                a(href = "https://github.com/GustavoFRGomes", classes = "icon github") {
                     span(classes = "sr-only") { +"GitHub" }
-                } 
+                }
             }
-            li { 
-                a(href = "https://codeberg.org/ggomes", classes = "icon codeberg") { 
+            li {
+                a(href = "https://codeberg.org/ggomes", classes = "icon codeberg") {
                     span(classes = "sr-only") { +"Codeberg" }
-                } 
+                }
             }
-            li { 
-                a(href = "https://bsky.app/profile/gfrgomes.bsky.social", classes = "icon bluesky") { 
+            li {
+                a(href = "https://bsky.app/profile/gfrgomes.bsky.social", classes = "icon bluesky") {
                     span(classes = "sr-only") { +"Bluesky" }
-                } 
+                }
             }
-            li { 
-                a(href = "https://linkedin.com/in/gustavo-gomes-501878b0", classes = "icon linkedin") { 
+            li {
+                a(href = "https://linkedin.com/in/gustavo-gomes-501878b0", classes = "icon linkedin") {
                     span(classes = "sr-only") { +"LinkedIn" }
-                } 
+                }
             }
-            li { 
-                a(href = "mailto:ggomes@mail.com", classes = "icon email") { 
+            li {
+                a(href = "mailto:ggomes@mail.com", classes = "icon email") {
                     span(classes = "sr-only") { +"Email" }
-                } 
+                }
             }
-            li { 
-                a(href = "rss.xml", classes = "icon rss") { 
+            li {
+                a(href = "${prefix}rss.xml", classes = "icon rss") {
                     span(classes = "sr-only") { +"RSS" }
-                } 
+                }
             }
-            li { 
-                a(href = "presentations/index.html", classes = "icon presentations") { 
+            li {
+                a(href = "${prefix}presentations/index.html", classes = "icon presentations") {
                     span(classes = "sr-only") { +"Presentations" }
-                } 
+                }
             }
         }
     }
@@ -247,13 +259,7 @@ fun generateIndex(posts: List<Post>): String = createHTML().html {
     }
     body {
         button(classes = "theme-toggle") { id = "theme-toggle"; +"🌙" }
-        nav {
-            a(href = "index.html") { +"My Blog" }
-            +" | "
-            a(href = "model-reviews/index.html") { +"AI Model Reviews" }
-            +" | "
-            a(href = "presentations/index.html") { +"Presentations" }
-        }
+        generateNav()()
         h1 { +"My Blog" }
         div(classes = "post-list") {
             posts.forEach { post ->
@@ -288,7 +294,7 @@ fun generatePost(post: Post, modelReviews: Boolean = false): String = createHTML
         p { +post.formattedDate() }
         unsafe { +post.content }
         hr {}
-        generateSocialLinks()()
+        generateSocialLinks(depth = if (modelReviews) 1 else 0)()
         script(src = if (modelReviews) "../theme.js" else "theme.js") {}
     }
 }
@@ -334,11 +340,11 @@ fun generatePresentationIndex(): String = createHTML().html {
     head {
         meta(charset = "utf-8")
         title("Presentations")
-        link(rel = "stylesheet", href = "style.css")
+        link(rel = "stylesheet", href = "../style.css")
     }
     body {
         button(classes = "theme-toggle") { id = "theme-toggle"; +"🌙" }
-        a(href = "../index.html") { +"← Back to home" }
+        generateNav(depth = 1)()
         h1 { +"Presentations" }
         div(classes = "post-list") {
             div(classes = "post-item") {
@@ -349,7 +355,7 @@ fun generatePresentationIndex(): String = createHTML().html {
             }
         }
         hr {}
-        generateSocialLinks()()
+        generateSocialLinks(depth = 1)()
         script(src = "../theme.js") {}
     }
 }
@@ -362,17 +368,17 @@ fun generatePresentationPage(title: String, description: String, pdfUrl: String,
     }
     body {
         button(classes = "theme-toggle") { id = "theme-toggle"; +"🌙" }
-        a(href = "../index.html") { +"← Back to home" }
+        generateNav(depth = 1)()
         div(classes = "business-card") {
             h1 { +title }
             p { +description }
-            p(classes = "post-date") { 
+            div(classes = "download-links") {
                 a(href = pdfUrl, classes = "download-link") { +"Download slides (PDF)" }
                 a(href = downloadUrl, classes = "download-link", target = "_blank") { +"View on Mail.com" }
             }
         }
         hr {}
-        generateSocialLinks()()
+        generateSocialLinks(depth = 1)()
         script(src = "../theme.js") {}
     }
 }
