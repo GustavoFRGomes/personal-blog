@@ -1,0 +1,9 @@
+{
+  // Static-only blog: no Worker script, all requests served as static assets.
+  "name": "personal-blog",
+  // Set to the current date at migration time.
+  "compatibility_date": "2026-10-08",
+  "assets": {
+    "directory": "./build/site"
+  }
+}
