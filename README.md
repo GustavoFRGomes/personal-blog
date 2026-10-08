@@ -45,12 +45,12 @@ A simple Kotlin Multiplatform static blog generator.
 ### Cloudflare Pages
 
 #### Manual Deployment
-- Run `./gradlew buildSite`, then `npx wrangler deploy ./build/site`. The Worker configuration is in `wrangler.jsonc` (assets directory: `./build/site`).
+- Run `./gradlew buildSite`, then `npx wrangler deploy` (uses `wrangler.jsonc`, which points the assets directory at `./build/site`).
 
 #### Automated Deployment via GitHub Actions
 The repository is configured to automatically deploy to Cloudflare Workers (static assets) when changes are pushed to the `main` branch. To set this up:
 
-1. Deploy once with `npx wrangler deploy ./build/site` (after running `./gradlew buildSite`) to create the Worker project, or configure the `personal-blog` Worker in the Cloudflare dashboard.
+1. Deploy once with `npx wrangler deploy` (after running `./gradlew buildSite`) to create the Worker project, or configure the `personal-blog` Worker in the Cloudflare dashboard.
 2. Add the following secrets to your GitHub repository:
    - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token with Workers permissions
    - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
