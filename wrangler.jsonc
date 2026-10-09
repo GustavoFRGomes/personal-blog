@@ -5,5 +5,10 @@
   "compatibility_date": "2026-10-08",
   "assets": {
     "directory": "./build/site"
-  }
+  },
+  // Attach the custom domain on deploy (requires the domain to be free —
+  // i.e. removed from the legacy Pages project first).
+  "routes": [
+    { "pattern": "ggomes.org", "custom_domain": true }
+  ]
 }
