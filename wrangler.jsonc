@@ -9,6 +9,7 @@
   // Attach the custom domain on deploy (requires the domain to be free —
   // i.e. removed from the legacy Pages project first).
   "routes": [
-    { "pattern": "ggomes.org", "custom_domain": true }
+    { "pattern": "ggomes.org", "custom_domain": true },
+    { "pattern": "blog.ggomes.org", "custom_domain": true }
   ]
 }
