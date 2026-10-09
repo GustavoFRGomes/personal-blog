@@ -1,0 +1,21 @@
+name: One-off cleanup — delete legacy Cloudflare Pages project
+
+# Manually triggered from the GitHub Actions UI ("Run workflow").
+# Deletes the legacy Pages project so ggomes.org can be attached to the
+# Worker (custom domains can only be attached to one project at a time).
+# Run this ONCE. Re-running it afterwards is expected to fail (project gone).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-pages-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete legacy Pages project
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          command: pages project delete personal-blog --yes
